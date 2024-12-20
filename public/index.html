@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tamagotchi</title>
+    <style>
+        #status {
+            font-size: 48px;
+            margin: 20px;
+        }
+        button {
+            font-size: 20px;
+            padding: 10px 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="status">🙂</div>
+    <button id="actionBtn">Feed</button>
+    <div>Hunger: <span id="hungerValue">20</span></div>
+
+    <script>
+        const STATES = {
+            ALIVE: 0b001,
+            HUNGRY: 0b010,
+            DEAD: 0b100
+        };
+
+        const ACTIONS = {
+            FEED: 0b001,
+            BURY: 0b010
+        };
+
+        const ws = new WebSocket('ws://localhost:8080');
+        const statusEl = document.getElementById('status');
+        const actionBtn = document.getElementById('actionBtn');
+        const hungerEl = document.getElementById('hungerValue');
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            
+            // Update display
+            hungerEl.textContent = data.hungerValue;
+            
+            // Update status emoji and button text
+            switch(data.state) {
+                case STATES.ALIVE:
+                    statusEl.textContent = '🙂';
+                    actionBtn.textContent = 'Feed';
+                    break;
+                case STATES.HUNGRY:
+                    statusEl.textContent = '🍔';
+                    actionBtn.textContent = 'Feed';
+                    break;
+                case STATES.DEAD:
+                    statusEl.textContent = '💀';
+                    actionBtn.textContent = 'Bury';
+                    break;
+            }
+        };
+
+        actionBtn.addEventListener('click', () => {
+            const action = statusEl.textContent === '💀' ? ACTIONS.BURY : ACTIONS.FEED;
+            ws.send(JSON.stringify({ action }));
+        });
+    </script>
+</body>
+</html>
